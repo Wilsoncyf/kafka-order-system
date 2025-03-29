@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class AutoCompensationService {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     private static final int MAX_RETRY = 3;
+
+    @Value("${compensation.enabled:true}")
+    private boolean compensationEnabled;
 
     @KafkaListener(topics = "network-error-topic", groupId = "compensation-group")
     public void handleNetworkError(ConsumerRecord<String, String> record) {
@@ -36,8 +40,11 @@ public class AutoCompensationService {
 
     private void handleRetry(String sourceTopic, ConsumerRecord<String, String> record) {
         String value = record.value();
+        if (!compensationEnabled) {
+            System.out.println("🚫 [补偿关闭] 当前关闭状态，忽略补偿消息：" + value);
+            return;
+        }
         int currentRetry = getRetryCount(record);
-
         if (currentRetry >= MAX_RETRY) {
             System.out.println("🚫 [自动补偿] 超过最大补偿次数，丢弃消息：" + value);
             return;
