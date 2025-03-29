@@ -1,6 +1,9 @@
 # Kafka Order System 🛒
 
 一个基于 Spring Boot + Kafka 的电商订单系统：
+<p align="center">
+  <img src="architecture.png" alt="Kafka Order Flow" width="800">
+</p>
 
 ## 功能亮点：
 
